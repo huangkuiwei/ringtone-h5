@@ -1,6 +1,6 @@
 page {
   --page-title-height: calc(var(--status-bar-height) + 120rpx);
-  --page-title-padding-top: calc(var(--status-bar-height) + 68rpx);
+  --page-title-padding-top: calc(var(--status-bar-height) + 30rpx);
 }
 
 // 页面 title
@@ -12,9 +12,8 @@ page {
   right: 0;
   text-align: center;
   padding-top: calc(var(--page-title-padding-top));
-  color: #1a1a1a;
+  color: #000000;
   font-size: 32rpx;
-  font-weight: bold;
   z-index: 9;
 
   .back {

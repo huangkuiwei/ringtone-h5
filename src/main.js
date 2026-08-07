@@ -13,6 +13,8 @@ import uniPopup from '@dcloudio/uni-ui/lib/uni-popup/uni-popup.vue';
 import uniFilePicker from '@dcloudio/uni-ui/lib/uni-file-picker/uni-file-picker.vue';
 import uniCountdown from '@dcloudio/uni-ui/lib/uni-countdown/uni-countdown.vue';
 
+import 'cropperjs/dist/cropper.min.css';
+
 Vue.config.productionTip = false;
 
 Vue.component('uniIcons', uniIcons);
