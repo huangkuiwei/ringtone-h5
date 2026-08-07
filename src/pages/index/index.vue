@@ -237,12 +237,11 @@ export default {
 
 <style scoped lang="scss">
 page {
-  background: #f4f6fa;
+  min-height: 100%;
+  background: #f4f6fa url('@/static/images/index/bg.png') left top/100% auto no-repeat;
 }
 
 .index-page {
-  background: url('@/static/images/index/bg.png') left top/100% auto no-repeat;
-
   .page-title {
   }
 

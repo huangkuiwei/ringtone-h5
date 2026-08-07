@@ -5,6 +5,12 @@
       "style": {
         "navigationStyle": "custom"
       }
+    },
+    {
+      "path": "pages/member/member",
+      "style": {
+        "navigationStyle": "custom"
+      }
     }
   ],
   "tabBar": {
@@ -20,19 +26,19 @@
         "selectedIconPath": "static/tabBar/home1.png"
       },
       {
-        "pagePath": "pages/recode/recode",
+        "pagePath": "pages/member/member",
         "text": "成员",
         "iconPath": "static/tabBar/member.png",
         "selectedIconPath": "static/tabBar/member1.png"
       },
       {
-        "pagePath": "pages/sunshine/sunshine",
+        "pagePath": "pages/ringtone/ringtone",
         "text": "铃音",
         "iconPath": "static/tabBar/ringtone.png",
         "selectedIconPath": "static/tabBar/ringtone1.png"
       },
       {
-        "pagePath": "pages/my/my",
+        "pagePath": "pages/alarm/alarm",
         "text": "闹钟",
         "iconPath": "static/tabBar/alarm.png",
         "selectedIconPath": "static/tabBar/alarm1.png"
