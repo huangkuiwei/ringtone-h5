@@ -14,7 +14,7 @@ let hasShowLoginModal = false;
 
 const $http = {
   post: (url, data, config = {}) => {
-    let token = config.token || uni.getStorageSync('foodDiaryToken').value;
+    let token = config.token || uni.getStorageSync('alarmToken').value;
 
     if (!url.includes('http')) {
       url = baseApi + url;
@@ -61,7 +61,7 @@ const $http = {
             } else {
               if (url.includes('sjapi.netling.cn')) {
                 // 清除过期 token
-                uni.removeStorageSync('foodDiaryToken');
+                uni.removeStorageSync('alarmToken');
                 store.commit('app/_setUserInfo', {});
               }
 
@@ -108,7 +108,7 @@ const $http = {
   },
 
   get: (url, data, config = {}) => {
-    let token = config.token || uni.getStorageSync('foodDiaryToken').value;
+    let token = config.token || uni.getStorageSync('alarmToken').value;
 
     if (!url.includes('http')) {
       url = baseApi + url;
@@ -150,7 +150,7 @@ const $http = {
             } else {
               if (url.includes('sjapi.netling.cn')) {
                 // 清除过期 token
-                uni.removeStorageSync('foodDiaryToken');
+                uni.removeStorageSync('alarmToken');
                 store.commit('app/_setUserInfo', {});
               }
 
@@ -197,7 +197,7 @@ const $http = {
   },
 
   upload: (url, fileUrl, name = 'file', formData = {}, config = {}) => {
-    let token = config.token || uni.getStorageSync('foodDiaryToken').value;
+    let token = config.token || uni.getStorageSync('alarmToken').value;
 
     if (!url.includes('http')) {
       url = baseApi + url;
@@ -235,7 +235,7 @@ const $http = {
             } else {
               if (url.includes('sjapi.netling.cn')) {
                 // 清除过期 token
-                uni.removeStorageSync('foodDiaryToken');
+                uni.removeStorageSync('alarmToken');
                 store.commit('app/_setUserInfo', {});
               }
 
