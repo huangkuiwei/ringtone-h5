@@ -23,7 +23,7 @@
           </view>
         </template>
 
-        <view v-else class="no-remember">暂无数据</view>
+        <view v-else class="no-remember">暂无内容</view>
       </view>
     </view>
 
