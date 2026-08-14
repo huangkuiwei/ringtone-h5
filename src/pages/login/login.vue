@@ -20,8 +20,8 @@
           <view class="value">
             <input
               type="text"
-              :value="formState.mobile"
-              @input="formState.mobile = $event.detail.value"
+              :value="formState.phone"
+              @input="formState.phone = $event.detail.value"
               placeholder="请输入手机号"
             />
           </view>
@@ -59,7 +59,7 @@ export default {
   data() {
     return {
       formState: {
-        mobile: '',
+        phone: '',
         sms_sign: '',
         sms_code: '',
       },
@@ -101,12 +101,12 @@ export default {
     ...mapActions('app', ['_getUserInfo']),
 
     /**
-     * TODO 发送验证码
+     * 发送验证码
      */
     sendCode() {
       if (this.disabled) return;
 
-      if (!this.formState.mobile) {
+      if (!this.formState.phone) {
         uni.showToast({
           title: '手机号错误',
           icon: 'none',
@@ -122,7 +122,7 @@ export default {
 
       $http
         .post('api/global/sms/send_code', {
-          mobile: this.formState.mobile,
+          mobile: this.formState.phone,
         })
         .then((res) => {
           uni.hideLoading();
@@ -133,10 +133,10 @@ export default {
     },
 
     /**
-     * TODO 登录
+     * 登录
      */
     login() {
-      if (!this.formState.mobile) {
+      if (!this.formState.phone) {
         uni.showToast({
           title: '手机号错误',
           icon: 'none',
@@ -160,20 +160,14 @@ export default {
       });
 
       $http
-        .post('api/user/auth/userauth/login', {
-          uname: this.formState.mobile,
+        .post('api/app/user/login', {
+          phone: this.formState.phone,
           sms_sign: this.formState.sms_sign,
           sms_code: this.formState.sms_code,
         })
         .then((res) => {
           // 登录完成之后保存 token
-          const storageExpireDays = 7;
-          const currentTime = Date.now();
-          const expireTime = currentTime + storageExpireDays * 24 * 60 * 60 * 1000; // 当前时间加上7天
-          uni.setStorageSync('alarmToken', {
-            value: res.data.token,
-            expireTime: expireTime,
-          });
+          uni.setStorageSync('alarmToken', res.data.token);
 
           // 登录完成获取用户信息
           this._getUserInfo().then(() => {

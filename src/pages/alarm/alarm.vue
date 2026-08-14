@@ -1,5 +1,5 @@
 <template>
-  <view class="ringtone-page">
+  <view class="alarm-page">
     <view class="page-title">闹铃设置</view>
 
     <!--TODO 缺少切图-->
@@ -8,17 +8,15 @@
 
       <view class="funs">
         <view class="fun-item">
-          <image mode="widthFix" src="/static/images/member/head.png" />
           <view class="tips1">新增预约个人闹铃</view>
           <view class="tips2">专属视频闹铃电话提醒</view>
-          <view class="btn" @click="appointment(1)">立即预约 ＞</view>
+          <view class="btn" @click="appointment(false)">立即预约 ＞</view>
         </view>
 
         <view class="fun-item">
-          <image mode="widthFix" src="/static/images/member/head.png" />
           <view class="tips1">新增预约家庭闹铃</view>
           <view class="tips2">专属视频闹铃电话提醒家人</view>
-          <view class="btn btn2" @click="appointment(2)">立即预约 ＞</view>
+          <view class="btn btn2" @click="appointment(true)">立即预约 ＞</view>
         </view>
       </view>
     </view>
@@ -30,16 +28,19 @@
         <template v-if="alarmList.length">
           <view class="order-item" v-for="item of alarmList" :key="item.id">
             <view class="info">
-              <text class="type">类型：{{ item.type === 1 ? '个人' : '家庭' }}</text>
-              <text class="account">账号：{{ item.account }}</text>
+              <text class="type">类型：{{ item.is_family ? '家庭' : '个人' }}</text>
+              <text class="account">账号：{{ item.phone }}</text>
             </view>
 
-            <text class="frequency">频率：{{ item.frequency === 1 ? '单次' : '周期' }}</text>
+            <text class="frequency">频率：{{ item.is_once ? '单次' : '周期' }}</text>
+            <!-- TODO 时间显示 -->
             <text class="time">预约时间：{{ item.time }}</text>
-            <text class="name">视频播放：{{ item.name }}</text>
+            <text class="name" v-if="item.type === 1">视频播放：随机播放</text>
+            <text class="name" v-else-if="item.type === 2">视频播放：顺序播放</text>
+            <text class="name" v-else-if="item.type === 5">视频播放：AIGC播放</text>
 
             <view class="options">
-              <text @click="toggle(item)">停用</text>
+              <text @click="toggle(item)">{{ item.is_enable ? '停用' : '启用' }}</text>
               <text @click="modify(item)">修改</text>
               <text @click="deleteItem(item)">删除</text>
             </view>
@@ -52,16 +53,16 @@
 
     <uni-popup ref="appointmentDialog">
       <view class="appointment-dialog">
-        <view class="title">新增预约{{ alarmData.type === 1 ? '个人' : '家庭' }}闹钟</view>
+        <view class="title">新增预约{{ alarmData.is_family ? '家庭' : '个人' }}闹钟</view>
 
         <view class="frequency">
-          <text :class="{ active: alarmData.frequency === 1 }" @click="alarmData.frequency = 1">单次</text>
-          <text :class="{ active: alarmData.frequency === 2 }" @click="alarmData.frequency = 2">周期</text>
+          <text :class="{ active: alarmData.is_once }" @click="alarmData.is_once = true">单次</text>
+          <text :class="{ active: !alarmData.is_once }" @click="alarmData.is_once = false">周期</text>
         </view>
 
         <view class="line"></view>
 
-        <view class="week" v-if="alarmData.frequency === 2">
+        <view class="week" v-if="!alarmData.is_once">
           <view
             class="item"
             :class="{ active: item.selected }"
@@ -75,7 +76,7 @@
 
         <view class="detail">
           <view class="left">
-            <view class="time" v-if="alarmData.frequency === 1">
+            <view class="time" v-if="alarmData.is_once">
               <text class="label">预约时间</text>
               <picker mode="date" :value="alarmData.date" @change="alarmData.date = $event.detail.value">
                 <view class="value">
@@ -93,7 +94,7 @@
                 @change="alarmData.video = $event.detail.value"
                 range-key="name"
                 :value="alarmData.video"
-                :range="alarmData.type === 1 ? videoList.slice(0, 2) : videoList"
+                :range="alarmData.is_family ? videoList : videoList.slice(0, 2)"
               >
                 <view class="value">
                   <text class="value-text" v-if="videoList[alarmData.video]">
@@ -154,8 +155,10 @@
 </template>
 
 <script>
+import $http from '@/utils/http';
+
 export default {
-  name: 'indexPage',
+  name: 'alarmPage',
 
   data() {
     const hours = [];
@@ -170,43 +173,10 @@ export default {
     }
 
     return {
-      alarmList: [
-        {
-          id: 0,
-          type: 1,
-          name: '家庭AICG',
-          account: '158****8899',
-          frequency: 1,
-          time: '2026-05-06 12:35:52',
-        },
-        {
-          id: 1,
-          type: 1,
-          name: '家庭AICG',
-          account: '158****8899',
-          frequency: 1,
-          time: '2026-05-06 12:35:52',
-        },
-        {
-          id: 2,
-          type: 1,
-          name: '家庭AICG',
-          account: '158****8899',
-          frequency: 2,
-          time: '2026-05-06 12:35:52',
-        },
-        {
-          id: 3,
-          type: 2,
-          name: '家庭AICG',
-          account: '158****8899',
-          frequency: 2,
-          time: '2026-05-06 12:35:52',
-        },
-      ],
+      alarmList: [],
       alarmData: {
-        type: 1,
-        frequency: 1,
+        is_family: false,
+        is_once: true,
         date: undefined,
         time: undefined,
         video: 0,
@@ -230,16 +200,33 @@ export default {
     };
   },
 
-  onShow() {},
+  onShow() {
+    this.getAlarmList();
+  },
 
   methods: {
     /**
-     * TODO 预约
+     * 获取闹铃数据
+     * @returns {Promise<void>}
      */
-    appointment(type) {
+    getAlarmList() {
+      return $http
+        .post('api/app/clock/query-clocks', {
+          pageIndex: 1,
+          pageSize: 9999,
+        })
+        .then((res) => {
+          this.orderList = res.data.List;
+        });
+    },
+
+    /**
+     * 预约
+     */
+    appointment(is_family) {
       this.alarmData = {
-        type: type,
-        frequency: 1,
+        is_family: is_family,
+        is_once: true,
         date: undefined,
         time: undefined,
         video: 0,
@@ -249,11 +236,36 @@ export default {
     },
 
     /**
-     * TODO 停用/启用
+     * 停用/启用
      * @param item
      */
     toggle(item) {
-      console.log('item', item);
+      uni.showModal({
+        title: '提示',
+        content: item.is_enable ? '确认停用该闹铃吗？' : '确认启用该闹铃吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post('api/app/clock/set-enable', {
+                id: item.id,
+              })
+              .then(() => {
+                this.getAlarmList();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
     },
 
     /**
@@ -266,11 +278,36 @@ export default {
     },
 
     /**
-     * TODO 删除
+     * 删除
      * @param item
      */
     deleteItem(item) {
-      console.log('item', item);
+      uni.showModal({
+        title: '提示',
+        content: '确认删除该条数据吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post('api/app/clock/delete-clock', {
+                id: item.id,
+              })
+              .then(() => {
+                this.getAlarmList();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
     },
 
     /**
@@ -287,7 +324,7 @@ page {
   background: #f4f6fa url('@/static/images/member/bg01.png') left top/100% auto no-repeat;
 }
 
-.ringtone-page {
+.alarm-page {
   padding: 0 37rpx 80rpx;
 
   .page-title {
@@ -295,7 +332,7 @@ page {
 
   .alarm-setting {
     margin-top: 100rpx;
-    background: #ffd4a3;
+    background: url('@/static/images/alarm/bg.png') left top/100% 100% no-repeat;
     padding: 34rpx 28rpx;
     border-radius: 21rpx;
 
@@ -312,7 +349,7 @@ page {
       justify-content: space-between;
 
       .fun-item {
-        background: #ffffff;
+        // background: #ffffff;
         padding-bottom: 20rpx;
         border-radius: 21rpx;
         width: 303rpx;
@@ -321,12 +358,8 @@ page {
         align-items: center;
         justify-content: center;
 
-        image {
-          width: 183rpx;
-        }
-
         .tips1 {
-          margin-top: 11rpx;
+          margin-top: 160rpx;
           font-weight: 500;
           font-size: 25rpx;
           color: #000000;

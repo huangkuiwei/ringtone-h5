@@ -36,11 +36,11 @@ export function verifyIsLogin() {
 
   uni.showModal({
     title: '提示',
-    content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星需要您登录',
+    content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星闹铃需要您登录',
     showCancel: true,
     success: (res) => {
       if (res.confirm) {
-        toRouter('/packageLogin/pages/login/login');
+        toRouter('/pages/login/login');
       } else if (res.cancel) {
         console.log('用户点击取消');
       }

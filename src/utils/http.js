@@ -14,7 +14,7 @@ let hasShowLoginModal = false;
 
 const $http = {
   post: (url, data, config = {}) => {
-    let token = config.token || uni.getStorageSync('alarmToken').value;
+    let token = config.token || uni.getStorageSync('alarmToken');
 
     if (!url.includes('http')) {
       url = baseApi + url;
@@ -59,7 +59,7 @@ const $http = {
 
               reject(res.data);
             } else {
-              if (url.includes('sjapi.netling.cn')) {
+              if (url.includes('alarmapi.qingsail.com')) {
                 // 清除过期 token
                 uni.removeStorageSync('alarmToken');
                 store.commit('app/_setUserInfo', {});
@@ -70,13 +70,13 @@ const $http = {
 
                 uni.showModal({
                   title: '提示',
-                  content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星需要您登录',
+                  content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星闹铃需要您登录',
                   showCancel: true,
                   success: (res) => {
                     hasShowLoginModal = false;
 
                     if (res.confirm) {
-                      toRouter('/packageLogin/pages/login/login');
+                      toRouter('/pages/login/login');
                     } else if (res.cancel) {
                       console.log('用户点击取消');
                     }
@@ -108,7 +108,7 @@ const $http = {
   },
 
   get: (url, data, config = {}) => {
-    let token = config.token || uni.getStorageSync('alarmToken').value;
+    let token = config.token || uni.getStorageSync('alarmToken');
 
     if (!url.includes('http')) {
       url = baseApi + url;
@@ -148,7 +148,7 @@ const $http = {
 
               reject(res.data);
             } else {
-              if (url.includes('sjapi.netling.cn')) {
+              if (url.includes('alarmapi.qingsail.com')) {
                 // 清除过期 token
                 uni.removeStorageSync('alarmToken');
                 store.commit('app/_setUserInfo', {});
@@ -159,13 +159,13 @@ const $http = {
 
                 uni.showModal({
                   title: '提示',
-                  content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星需要您登录',
+                  content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星闹铃需要您登录',
                   showCancel: true,
                   success: (res) => {
                     hasShowLoginModal = false;
 
                     if (res.confirm) {
-                      toRouter('/packageLogin/pages/login/login');
+                      toRouter('/pages/login/login');
                     } else if (res.cancel) {
                       console.log('用户点击取消');
                     }
@@ -196,8 +196,8 @@ const $http = {
     });
   },
 
-  upload: (url, fileUrl, name = 'file', formData = {}, config = {}) => {
-    let token = config.token || uni.getStorageSync('alarmToken').value;
+  upload: (url, file, name = 'file', formData = {}, config = {}) => {
+    let token = config.token || uni.getStorageSync('alarmToken');
 
     if (!url.includes('http')) {
       url = baseApi + url;
@@ -207,7 +207,8 @@ const $http = {
       uni.uploadFile({
         url: url,
         name: name,
-        filePath: fileUrl,
+        file: file,
+        filePath: 'xxx',
         formData: formData,
         header: {
           token,
@@ -233,7 +234,7 @@ const $http = {
 
               reject(res.data);
             } else {
-              if (url.includes('sjapi.netling.cn')) {
+              if (url.includes('alarmapi.qingsail.com')) {
                 // 清除过期 token
                 uni.removeStorageSync('alarmToken');
                 store.commit('app/_setUserInfo', {});
@@ -244,13 +245,13 @@ const $http = {
 
                 uni.showModal({
                   title: '提示',
-                  content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星需要您登录',
+                  content: '您当前未登录或登录已失效，为了您有更好的体验，咪咕明星闹铃需要您登录',
                   showCancel: true,
                   success: (res) => {
                     hasShowLoginModal = false;
 
                     if (res.confirm) {
-                      toRouter('/packageLogin/pages/login/login');
+                      toRouter('/pages/login/login');
                     } else if (res.cancel) {
                       console.log('用户点击取消');
                     }

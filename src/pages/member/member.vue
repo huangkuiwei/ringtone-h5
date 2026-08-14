@@ -9,21 +9,24 @@
     </view>
 
     <view class="family-detail">
-      <view class="title">
-        <text class="name">158****6688 的家庭</text>
-        <text class="number">{{ rememberList.length }}人</text>
+      <view class="title" v-if="isLogin">
+        <text class="name">{{ userInfo.phone }} 的家庭</text>
+        <text class="number">{{ memberList.length }}人</text>
       </view>
 
       <view class="member-list">
-        <template v-if="rememberList.length">
-          <view class="item" v-for="item of rememberList" :key="item.id">
+        <template v-if="memberList.length">
+          <view class="item" v-for="item of memberList" :key="item.id">
             <image mode="widthFix" src="/static/images/member/head.png" />
             <view class="phone">{{ item.phone }}</view>
             <view class="delete" @click="deleteRemember(item)">删除</view>
           </view>
         </template>
 
-        <view v-else class="no-remember">暂无内容</view>
+        <view v-else class="no-remember">
+          <text v-if="isLogin">暂无成员</text>
+          <text v-else @click="verifyIsLogin">登录后查看家庭成员</text>
+        </view>
       </view>
     </view>
 
@@ -50,44 +53,109 @@
 </template>
 
 <script>
+import $http from '@/utils/http';
+import { mapGetters, mapState } from 'vuex';
+import { verifyIsLogin } from '@/utils';
+
 export default {
-  name: 'indexPage',
+  name: 'memberPage',
 
   data() {
     return {
-      rememberList: [
-        { id: 0, phone: '152****1111' },
-        { id: 1, phone: '152****2222' },
-        { id: 2, phone: '152****3333' },
-        { id: 3, phone: '152****4444' },
-      ],
+      memberList: [],
       phone: undefined,
+      verifyIsLogin,
     };
   },
 
-  onShow() {},
+  computed: {
+    ...mapState('app', ['userInfo']),
+    ...mapGetters('app', ['isLogin']),
+  },
+
+  onShow() {
+    this.getMemberList();
+  },
 
   methods: {
+    getMemberList() {
+      return $http
+        .post('api/app/user/query-familys', {
+          pageIndex: 1,
+          pageSize: 9999,
+        })
+        .then((res) => {
+          this.memberList = res.data.List;
+        });
+    },
+
     /**
-     * TODO 邀请
+     * 邀请
      */
     invitation() {
+      verifyIsLogin();
       this.$refs.invitationDialog.open();
     },
 
     /**
-     * TODO 删除
+     * 删除
      * @param item
      */
     deleteRemember(item) {
-      console.log('item', item);
+      uni.showModal({
+        title: '提示',
+        content: '确认删除该条数据吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post('api/app/user/delete-family', {
+                id: item.id,
+              })
+              .then(() => {
+                this.getMemberList();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
     },
 
     /**
-     * TODO 确认邀请
+     * 确认邀请
      */
     submitRemember() {
       if (/^1[3-9]\d{9}$/.test(this.phone)) {
+        uni.showLoading({
+          title: '请稍等...',
+          mask: true,
+        });
+
+        $http
+          .post('api/app/user/add-family', {
+            phone: this.phone,
+            // TODO
+            sms_sign: '123456',
+            sms_code: '123456',
+          })
+          .then(() => {
+            this.getMemberList();
+            uni.hideLoading();
+
+            uni.showToast({
+              title: '添加成功',
+              icon: 'none',
+            });
+          });
       } else {
         uni.showToast({
           title: '手机号不正确',
@@ -144,6 +212,7 @@ page {
     padding: 36rpx 10rpx;
 
     .title {
+      margin-bottom: 40rpx;
       padding-left: 31rpx;
       display: flex;
       align-items: center;
@@ -169,7 +238,6 @@ page {
     }
 
     .member-list {
-      margin-top: 40rpx;
       background: #f6f6f6;
       border-radius: 21rpx;
       border: 3px solid #ffffff;

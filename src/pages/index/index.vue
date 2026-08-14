@@ -43,7 +43,7 @@
 
       <view class="create-btn" @click="creation">
         <image mode="widthFix" src="/static/images/index/btn01.png" />
-        <text class="times">剩余{{ times }}次</text>
+        <text class="times">剩余{{ count }}次</text>
       </view>
 
       <view class="drafts">
@@ -51,17 +51,20 @@
 
         <view class="drafts-list" v-if="draftsList.length">
           <view class="item" v-for="item of draftsList" :key="item.id">
-            <image mode="aspectFill" :src="item.image" />
+            <image mode="aspectFill" :src="item.image_path" />
 
             <view class="detail">
-              <view class="name">{{ item.name }}</view>
-              <view class="time">{{ item.time }}</view>
-              <view class="status">{{ item.status }}</view>
+              <view class="name">{{ item.template_name }}</view>
+              <view class="time">{{ item.create_at }}</view>
+              <view class="status" v-if="item.Status === 0">创作中</view>
+              <view class="status status1" v-else-if="item.Status === 1">审核中</view>
+              <view class="status status2" v-else-if="item.Status === 2">审核成功</view>
+              <view class="status status3" v-else-if="item.Status === 3">创作失败</view>
             </view>
 
             <view class="options">
-              <view class="add" @click="addVideo">添加铃音列表</view>
-              <view class="delete" @click="deleteVideo">删除视频</view>
+              <view class="add" @click="addVideo" v-if="item.Status === 2">添加铃音列表</view>
+              <view class="delete" @click="deleteVideo(item)">删除视频</view>
             </view>
           </view>
         </view>
@@ -95,6 +98,9 @@
 
 <script>
 import Cropper from 'cropperjs';
+import $http from '@/utils/http';
+import { mapActions, mapGetters } from 'vuex';
+import { verifyIsLogin } from '@/utils';
 
 let cropper = null;
 
@@ -103,48 +109,60 @@ export default {
 
   data() {
     return {
-      styleList: [
-        { id: 0, name: '风格1', value: '风格1' },
-        { id: 1, name: '风格2', value: '风格2' },
-        { id: 2, name: '风格3', value: '风格3' },
-      ],
+      styleList: [],
       styleIndex: undefined,
-      draftsList: [
-        {
-          id: 0,
-          name: '风格1',
-          value: '风格1',
-          image: '/static/images/index/head.png',
-          time: '2026-08-05 13:58:24',
-          status: '审核中',
-        },
-        {
-          id: 1,
-          name: '风格2',
-          value: '风格2',
-          image: '/static/images/index/head.png',
-          time: '2026-08-05 13:58:24',
-          status: '审核中',
-        },
-        {
-          id: 2,
-          name: '风格3',
-          value: '风格3',
-          image: '/static/images/index/head.png',
-          time: '2026-08-05 13:58:24',
-          status: '审核中',
-        },
-      ],
-      times: 0,
+      draftsList: [],
       selectFile: undefined,
       scale: 1,
       cropperBlob: undefined,
+      imagePath: undefined,
     };
   },
 
-  onShow() {},
+  computed: {
+    ...mapGetters('app', ['count']),
+  },
+
+  onShow() {
+    this.getDraftsList();
+    this.getTemplateList();
+  },
 
   methods: {
+    ...mapActions('app', ['_getUserInfo']),
+
+    /**
+     * 获取草稿箱数据
+     */
+    getDraftsList() {
+      $http
+        .post('api/app/draft/query-drafts', {
+          pageIndex: 1,
+          pageSize: 9999,
+        })
+        .then((res) => {
+          res.data.Items.forEach((item) => {
+            item.image_path = item.image_path || '/static/images/index/head.png';
+          });
+
+          this.draftsList = res.data.Items;
+        });
+    },
+
+    /**
+     * 获取视频风格模板数据
+     */
+    getTemplateList() {
+      $http
+        .post('api/app/template/query-templates', {
+          pageIndex: 1,
+          pageSize: 9999,
+        })
+        .then((res) => {
+          this.styleList = res.data.Items;
+        });
+    },
+
     /**
      * 上传照片
      */
@@ -192,37 +210,102 @@ export default {
     },
 
     /**
-     * TODO 添加铃音列表
+     * 添加铃音列表
      */
-    addVideo() {},
+    addVideo(item) {
+      uni.showModal({
+        title: '提示',
+        content: '确认将该条数据添加到铃音列表吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post('api/app/draft/set-as-ringtone', {
+                id: item.id,
+              })
+              .then(() => {
+                this.getDraftsList();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
+    },
 
     /**
-     * TODO 删除视频
+     * 删除视频
      */
-    deleteVideo() {},
+    deleteVideo(item) {
+      uni.showModal({
+        title: '提示',
+        content: '确认删除该条数据吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post('api/app/draft/delete-draft', {
+                id: item.id,
+              })
+              .then(() => {
+                this.getDraftsList();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
+    },
 
     /**
-     * TODO 确定裁剪并上传
+     * 确定裁剪并上传
      */
     submit() {
       cropper.getCroppedCanvas().toBlob((blob) => {
+        uni.showLoading({
+          title: '上传中...',
+          mask: true,
+        });
+
         this.cropperBlob = URL.createObjectURL(blob);
 
         const file = new File([blob], 'file.png', {
           lastModified: new Date().getTime(),
-          type: 'text/plain',
+          type: 'image/png',
         });
 
-        console.log('file', file);
+        $http.upload('api/global/fileupload/upload', file).then((res) => {
+          uni.hideLoading();
+          this.imagePath = res.data;
+        });
+
         this.$refs.editImgDialog.close();
       });
     },
 
     /**
-     * TODO 立即创作
+     * 立即创作
      */
     creation() {
-      if (!this.times) {
+      verifyIsLogin();
+
+      if (!this.count) {
         uni.showToast({
           title: '创作次数为0',
           icon: 'none',
@@ -230,6 +313,52 @@ export default {
 
         return;
       }
+
+      if (!this.styleList[this.styleIndex]) {
+        uni.showToast({
+          title: '请选择视频风格',
+          icon: 'none',
+        });
+
+        return;
+      }
+
+      if (!this.imagePath) {
+        uni.showToast({
+          title: '请上传照片',
+          icon: 'none',
+        });
+
+        return;
+      }
+
+      uni.showLoading({
+        title: '加载中...',
+        mask: true,
+      });
+
+      $http
+        .post('api/app/draft/add-draft', {
+          image_path: this.imagePath,
+          template_id: this.styleList[this.styleIndex].id,
+        })
+        .then(() => {
+          uni.hideLoading();
+          this.getDraftsList();
+          this._getUserInfo();
+
+          uni.showToast({
+            title: '任务创建成功',
+            icon: 'none',
+          });
+
+          // 恢复初始数据
+          this.styleIndex = undefined;
+          this.selectFile = undefined;
+          this.scale = 1;
+          this.cropperBlob = undefined;
+          this.imagePath = undefined;
+        });
     },
   },
 };
@@ -403,6 +532,17 @@ page {
               background: #ffedfe;
               border-radius: 7rpx;
               padding: 4rpx 10rpx;
+
+              &.status1,
+              &.status2 {
+                background: #f0ffed;
+                color: #16a91d;
+              }
+
+              &.status3 {
+                background: #ffeded;
+                color: #ed0100;
+              }
             }
           }
 
@@ -410,6 +550,7 @@ page {
             flex-shrink: 0;
             display: flex;
             flex-direction: column;
+            justify-content: center;
             gap: 19rpx;
 
             view {

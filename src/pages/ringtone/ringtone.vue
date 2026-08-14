@@ -9,7 +9,7 @@
         <template v-if="orderList.length">
           <view class="order-item" v-for="item of orderList" :key="item.id">
             <text class="name">{{ item.name }}</text>
-            <text class="order-no">{{ item.orderNo }}</text>
+            <text class="order-no">{{ item.box_id }}</text>
           </view>
         </template>
 
@@ -23,11 +23,13 @@
       <view class="order-list">
         <template v-if="aigcOrderList.length">
           <view class="order-item" v-for="item of aigcOrderList" :key="item.id">
-            <image :src="item.head" mode="widthFix" />
+            <image :src="item.image_path" mode="widthFix" />
 
             <view class="info">
               <text class="name">{{ item.name }}</text>
-              <text class="status" :class="{ 'no-setting': item.status === '未设置' }">{{ item.status }}</text>
+              <text class="status" :class="{ 'no-setting': !item.is_set }">
+                {{ item.is_set ? '已设置' : '未设置' }}
+              </text>
             </view>
 
             <text class="option" @click="deleteAigc(item)">删除</text>
@@ -44,15 +46,17 @@
       <view class="order-list">
         <template v-if="ringtoneOrderList.length">
           <view class="order-item" v-for="item of ringtoneOrderList" :key="item.id">
-            <image :src="item.head" mode="widthFix" />
+            <image :src="item.image_path" mode="widthFix" />
 
             <view class="info">
               <text class="name">{{ item.name }}</text>
-              <text class="status" :class="{ 'no-setting': item.status === '未设置' }">{{ item.status }}</text>
+              <text class="status" :class="{ 'no-setting': !item.is_set }">
+                {{ item.is_set ? '已设置' : '未设置' }}
+              </text>
             </view>
 
-            <text class="option" @click="setting(item)" :class="{ setting: item.status === '未设置' }">
-              {{ item.status === '已设置' ? '取消设置' : '设置铃音' }}
+            <text class="option" @click="setting(item)" :class="{ setting: !item.is_set }">
+              {{ item.is_set === '已设置' ? '取消设置' : '设置铃音' }}
             </text>
           </view>
         </template>
@@ -64,49 +68,119 @@
 </template>
 
 <script>
+import $http from '@/utils/http';
+
 export default {
-  name: 'indexPage',
+  name: 'ringtonePage',
 
   data() {
     return {
-      orderList: [
-        { id: 0, name: '世界杯球星闹铃包', orderNo: '1234567890' },
-        { id: 1, name: '七夕畅销音乐闹铃包', orderNo: '1234567890' },
-        { id: 2, name: '世界杯球星闹铃包', orderNo: '1234567890' },
-        { id: 3, name: '七夕畅销音乐闹铃包', orderNo: '1234567890' },
-      ],
-      aigcOrderList: [
-        { id: 0, name: '世界杯球星闹铃包', head: '/static/images/index/head.png', status: '未设置' },
-        { id: 1, name: '七夕畅销音乐闹铃包', head: '/static/images/index/head.png', status: '已设置' },
-        { id: 2, name: '世界杯球星闹铃包', head: '/static/images/index/head.png', status: '已设置' },
-        { id: 3, name: '七夕畅销音乐闹铃包', head: '/static/images/index/head.png', status: '已设置' },
-      ],
-      ringtoneOrderList: [
-        { id: 0, name: '世界杯球星闹铃包', head: '/static/images/index/head.png', status: '未设置' },
-        { id: 1, name: '七夕畅销音乐闹铃包', head: '/static/images/index/head.png', status: '已设置' },
-        { id: 2, name: '世界杯球星闹铃包', head: '/static/images/index/head.png', status: '已设置' },
-        { id: 3, name: '七夕畅销音乐闹铃包', head: '/static/images/index/head.png', status: '已设置' },
-      ],
+      orderList: [],
     };
   },
 
-  onShow() {},
+  onShow() {
+    this.getData();
+  },
+
+  computed: {
+    aigcOrderList() {
+      return this.orderList.filter((item) => item.type === 0);
+    },
+
+    ringtoneOrderList() {
+      return this.orderList.filter((item) => item.type === 1);
+    },
+  },
 
   methods: {
-    /**
-     * TODO 删除
-     * @param item
-     */
-    deleteAigc(item) {
-      console.log('item', item);
+    getData() {
+      return $http
+        .post('api/app/ringtone/query-ringtones', {
+          pageIndex: 1,
+          pageSize: 9999,
+        })
+        .then((res) => {
+          res.data.forEach((item) => {
+            item.image_path = item.image_path || '/static/images/index/head.png';
+          });
+
+          this.orderList = res.data;
+        });
     },
 
     /**
-     * TODO 设置
+     * 删除
+     * @param item
+     */
+    deleteAigc(item) {
+      uni.showModal({
+        title: '提示',
+        content: '确认删除该条数据吗？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post('api/app/ringtone/delete-ringtone', {
+                id: item.id,
+              })
+              .then(() => {
+                this.getData();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
+    },
+
+    /**
+     * 设置
      * @param item
      */
     setting(item) {
-      console.log('item', item);
+      let api = '';
+
+      if (item.is_set) {
+        api = 'api/app/ringtone/cancel-set-ringtone';
+      } else {
+        api = 'api/app/ringtone/set-ringtone';
+      }
+
+      uni.showModal({
+        title: '提示',
+        content: item.is_set ? '确认取消设置该铃音？' : '确认设置该铃音？',
+        success: (res) => {
+          if (res.confirm) {
+            uni.showLoading({
+              title: '加载中...',
+              mask: true,
+            });
+
+            $http
+              .post(api, {
+                id: item.id,
+              })
+              .then(() => {
+                this.getData();
+                uni.hideLoading();
+
+                uni.showToast({
+                  title: '操作成功',
+                  icon: 'none',
+                });
+              });
+          }
+        },
+      });
     },
   },
 };

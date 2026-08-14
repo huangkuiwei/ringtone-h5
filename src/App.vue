@@ -1,14 +1,20 @@
 <script>
+import { mapActions } from 'vuex';
+
 export default {
   name: 'app',
-
-  globalData: {},
 
   data() {
     return {};
   },
 
-  methods: {},
+  onLaunch() {
+    this._getUserInfo();
+  },
+
+  methods: {
+    ...mapActions('app', ['_getUserInfo']),
+  },
 };
 </script>
 

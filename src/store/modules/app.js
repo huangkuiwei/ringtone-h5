@@ -7,6 +7,16 @@ const appStore = {
     userInfo: {},
   },
 
+  getters: {
+    isLogin: (state) => {
+      return state.userInfo.id;
+    },
+
+    count: (state) => {
+      return state.userInfo.use_count || 0;
+    },
+  },
+
   mutations: {
     _setUserInfo(state, payload) {
       state.userInfo = payload;
@@ -14,17 +24,18 @@ const appStore = {
   },
 
   actions: {
-    // TODO 获取用户消息
+    // 获取用户消息
     _getUserInfo({ commit }) {
       return $http
-        .get(
-          'api/user/auth/userauth/info?referch=1',
+        .post(
+          'api/app/user/get',
           {},
           {
             hideLoginBox: true,
           },
         )
         .then((res) => {
+          res.data.phone = res.data.phone.slice(0, 3) + '****' + res.data.phone.slice(-4);
           commit('_setUserInfo', res.data);
         });
     },

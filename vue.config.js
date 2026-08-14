@@ -4,7 +4,7 @@ module.exports = {
   devServer: {
     proxy: {
       '/api': {
-        target: 'https://sjapi.netling.cn',
+        target: 'https://alarmapi.qingsail.com',
         changeOrigin: true,
       },
     },
