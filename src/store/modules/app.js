@@ -12,6 +12,10 @@ const appStore = {
       return state.userInfo.id;
     },
 
+    isVip: (state) => {
+      return state.userInfo.is_vip;
+    },
+
     count: (state) => {
       return state.userInfo.use_count || 0;
     },

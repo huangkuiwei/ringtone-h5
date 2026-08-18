@@ -91,14 +91,14 @@
               <text class="label">视频播放</text>
               <picker
                 mode="selector"
-                @change="alarmData.video = $event.detail.value"
+                @change="alarmData.type = $event.detail.value"
                 range-key="name"
-                :value="alarmData.video"
+                :value="alarmData.type"
                 :range="alarmData.is_family ? videoList : videoList.slice(0, 2)"
               >
                 <view class="value">
-                  <text class="value-text" v-if="videoList[alarmData.video]">
-                    {{ videoList[alarmData.video].name }}
+                  <text class="value-text" v-if="videoList[alarmData.type]">
+                    {{ videoList[alarmData.type].name }}
                   </text>
                   <text class="value-text" v-else style="color: #666666">请选择</text>
                   <image mode="widthFix" src="/static/images/index/icon01.png" />
@@ -156,6 +156,7 @@
 
 <script>
 import $http from '@/utils/http';
+import { verifyIsLogin, verifyIsVIP } from '@/utils';
 
 export default {
   name: 'alarmPage',
@@ -178,8 +179,8 @@ export default {
         is_family: false,
         is_once: true,
         date: undefined,
-        time: undefined,
-        video: 0,
+        time: [0, 0],
+        type: 0,
       },
       weekList: [
         { id: 0, value: 0, text: '一', selected: false },
@@ -191,9 +192,9 @@ export default {
         { id: 6, value: 6, text: '日', selected: false },
       ],
       videoList: [
-        { id: 0, name: '随机播放', value: '随机播放' },
-        { id: 1, name: '顺序播放全部', value: '顺序播放全部' },
-        { id: 2, name: '家庭aigc', value: '家庭aigc' },
+        { id: 0, name: '随机播放', value: 1 },
+        { id: 1, name: '顺序播放全部', value: 2 },
+        { id: 2, name: '家庭aigc', value: 5 },
       ],
       hours,
       minutes,
@@ -224,12 +225,15 @@ export default {
      * 预约
      */
     appointment(is_family) {
+      verifyIsLogin();
+      verifyIsVIP();
+
       this.alarmData = {
         is_family: is_family,
         is_once: true,
         date: undefined,
-        time: undefined,
-        video: 0,
+        time: [0, 0],
+        type: 0,
       };
 
       this.$refs.appointmentDialog.open();
@@ -313,7 +317,72 @@ export default {
     /**
      * TODO 保存
      */
-    submit() {},
+    submit() {
+      let api = 'api/app/clock/add-clock';
+      let params = {};
+
+      if (this.alarmData.is_family) {
+        if (this.alarmData.is_once) {
+          if (!this.alarmData.date) {
+            uni.showToast({
+              title: '请选择预约时间',
+              icon: 'none',
+            });
+
+            return;
+          }
+
+          params = {
+            is_family: this.alarmData.is_family,
+            is_once: this.alarmData.is_once,
+            date: this.alarmData.date,
+            hour: this.alarmData.time[0],
+            minute: this.alarmData.time[1],
+            type: this.videoList[this.alarmData.type].value,
+          };
+        } else {
+          // TODO week_days 参数
+          let week_days = this.weekList.filter((x) => x.selected).map((x) => x.value);
+
+          if (!week_days.length) {
+            uni.showToast({
+              title: '请选择预约周期',
+              icon: 'none',
+            });
+
+            return;
+          }
+
+          params = {
+            is_family: this.alarmData.is_family,
+            is_once: this.alarmData.is_once,
+            week_days: week_days,
+            hour: this.alarmData.time[0],
+            minute: this.alarmData.time[1],
+            type: this.videoList[this.alarmData.type].value,
+          };
+        }
+      } else {
+        if (this.alarmData.is_once) {
+        } else {
+        }
+      }
+
+      console.log('params', params);
+      console.log('api', api);
+
+      // $http.post(api, params).then(() => {
+      //   this.getAlarmList();
+      //   uni.hideLoading();
+      //
+      //   uni.showToast({
+      //     title: '操作成功',
+      //     icon: 'none',
+      //   });
+      //
+      //   this.$refs.appointmentDialog.close();
+      // });
+    },
   },
 };
 </script>

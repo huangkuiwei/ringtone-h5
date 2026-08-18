@@ -16,7 +16,7 @@
 
       <view class="member-list">
         <template v-if="memberList.length">
-          <view class="item" v-for="item of memberList" :key="item.id">
+          <view class="item" v-for="item of memberList" :key="item.member_id">
             <image mode="widthFix" src="/static/images/member/head.png" />
             <view class="phone">{{ item.phone }}</view>
             <view class="delete" @click="deleteRemember(item)">删除</view>
@@ -55,7 +55,7 @@
 <script>
 import $http from '@/utils/http';
 import { mapGetters, mapState } from 'vuex';
-import { verifyIsLogin } from '@/utils';
+import { verifyIsLogin, verifyIsVIP } from '@/utils';
 
 export default {
   name: 'memberPage',
@@ -94,6 +94,7 @@ export default {
      */
     invitation() {
       verifyIsLogin();
+      verifyIsVIP();
       this.$refs.invitationDialog.open();
     },
 
@@ -114,7 +115,8 @@ export default {
 
             $http
               .post('api/app/user/delete-family', {
-                id: item.id,
+                phone: item.phone,
+                member_id: item.member_id,
               })
               .then(() => {
                 this.getMemberList();
@@ -143,9 +145,6 @@ export default {
         $http
           .post('api/app/user/add-family', {
             phone: this.phone,
-            // TODO
-            sms_sign: '123456',
-            sms_code: '123456',
           })
           .then(() => {
             this.getMemberList();
@@ -155,6 +154,8 @@ export default {
               title: '添加成功',
               icon: 'none',
             });
+
+            this.$refs.invitationDialog.close();
           });
       } else {
         uni.showToast({

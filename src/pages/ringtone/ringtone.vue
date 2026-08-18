@@ -56,7 +56,7 @@
             </view>
 
             <text class="option" @click="setting(item)" :class="{ setting: !item.is_set }">
-              {{ item.is_set === '已设置' ? '取消设置' : '设置铃音' }}
+              {{ item.is_set ? '取消设置' : '设置铃音' }}
             </text>
           </view>
         </template>

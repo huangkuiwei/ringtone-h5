@@ -51,7 +51,7 @@ const $http = {
             if (res.data.Code !== -100) {
               if (!config.hiddenErrorMessage) {
                 uni.showToast({
-                  title: res.data.msg || res.data.Msg,
+                  title: res.data.msg || res.data.Msg || res.data.title,
                   icon: 'none',
                   mask: true,
                 });
@@ -89,6 +89,8 @@ const $http = {
           }
         },
         fail: (error) => {
+          console.log(error);
+
           if (!config.hiddenErrorMessage) {
             if (error.errMsg === 'request:fail timeout') {
               error.errMsg = '接口超时，请稍后重试';
@@ -140,7 +142,7 @@ const $http = {
             if (res.data.Code !== -100) {
               if (!config.hiddenErrorMessage) {
                 uni.showToast({
-                  title: res.data.msg || res.data.Msg,
+                  title: res.data.msg || res.data.Msg || res.data.title,
                   icon: 'none',
                   mask: true,
                 });

@@ -49,3 +49,14 @@ export function verifyIsLogin() {
 
   throw Error('请先登录');
 }
+
+/**
+ * 验证是否是VIP
+ */
+export function verifyIsVIP() {
+  if (store.getters['app/isVip']) {
+    return true;
+  }
+
+  throw Error('非VIP用户');
+}

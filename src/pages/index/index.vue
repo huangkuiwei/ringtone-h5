@@ -100,7 +100,7 @@
 import Cropper from 'cropperjs';
 import $http from '@/utils/http';
 import { mapActions, mapGetters } from 'vuex';
-import { verifyIsLogin } from '@/utils';
+import { verifyIsLogin, verifyIsVIP } from '@/utils';
 
 let cropper = null;
 
@@ -167,6 +167,18 @@ export default {
      * 上传照片
      */
     uploadImg() {
+      verifyIsLogin();
+      verifyIsVIP();
+
+      if (!this.count) {
+        uni.showToast({
+          title: '创作次数为0',
+          icon: 'none',
+        });
+
+        return;
+      }
+
       uni.chooseImage({
         count: 1,
         success: (res) => {
@@ -304,6 +316,7 @@ export default {
      */
     creation() {
       verifyIsLogin();
+      verifyIsVIP();
 
       if (!this.count) {
         uni.showToast({
