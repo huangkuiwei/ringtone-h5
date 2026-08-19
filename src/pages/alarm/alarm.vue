@@ -33,8 +33,23 @@
             </view>
 
             <text class="frequency">频率：{{ item.is_once ? '单次' : '周期' }}</text>
-            <!-- TODO 时间显示 -->
-            <text class="time">预约时间：{{ item.time }}</text>
+            <view class="time">
+              预约时间：
+              <template v-if="item.is_once">
+                <text style="margin-right: 10rpx">{{ item.date }}</text>
+                <text>{{ hours[item.hour] }}</text>
+                <text>:</text>
+                <text>{{ minutes[item.minute] }}</text>
+              </template>
+
+              <template v-else>
+                <text>每周</text>
+                <text style="margin-right: 10rpx">{{ item.week_days1 }}</text>
+                <text>{{ hours[item.hour] }}</text>
+                <text>:</text>
+                <text>{{ minutes[item.minute] }}</text>
+              </template>
+            </view>
             <text class="name" v-if="item.type === 1">视频播放：随机播放</text>
             <text class="name" v-else-if="item.type === 2">视频播放：顺序播放</text>
             <text class="name" v-else-if="item.type === 5">视频播放：AIGC播放</text>
@@ -183,17 +198,17 @@ export default {
         type: 0,
       },
       weekList: [
-        { id: 0, value: 0, text: '一', selected: false },
-        { id: 1, value: 1, text: '二', selected: false },
-        { id: 2, value: 2, text: '三', selected: false },
-        { id: 3, value: 3, text: '四', selected: false },
-        { id: 4, value: 4, text: '五', selected: false },
-        { id: 5, value: 5, text: '六', selected: false },
-        { id: 6, value: 6, text: '日', selected: false },
+        { id: 0, value: 1, text: '一', selected: false },
+        { id: 1, value: 2, text: '二', selected: false },
+        { id: 2, value: 3, text: '三', selected: false },
+        { id: 3, value: 4, text: '四', selected: false },
+        { id: 4, value: 5, text: '五', selected: false },
+        { id: 5, value: 6, text: '六', selected: false },
+        { id: 6, value: 7, text: '日', selected: false },
       ],
       videoList: [
         { id: 0, name: '随机播放', value: 1 },
-        { id: 1, name: '顺序播放全部', value: 2 },
+        { id: 1, name: '顺序播放', value: 2 },
         { id: 2, name: '家庭aigc', value: 5 },
       ],
       hours,
@@ -217,7 +232,23 @@ export default {
           pageSize: 9999,
         })
         .then((res) => {
-          this.orderList = res.data.List;
+          res.data.List.forEach((item) => {
+            item.date = item.date && item.date.slice(0, 10);
+
+            if (item.week_days) {
+              let arr = [];
+
+              for (const item of item.week_days) {
+                let value = Number(item);
+                let text = this.weekList.find((item) => item.value === value).text;
+                arr.push(text);
+              }
+
+              item.week_days1 = arr.join('、');
+            }
+          });
+
+          this.alarmList = res.data.List;
         });
     },
 
@@ -235,6 +266,7 @@ export default {
         time: [0, 0],
         type: 0,
       };
+      this.weekList.forEach((item) => (item.selected = false));
 
       this.$refs.appointmentDialog.open();
     },
@@ -257,6 +289,7 @@ export default {
             $http
               .post('api/app/clock/set-enable', {
                 id: item.id,
+                is_enable: !item.is_enable,
               })
               .then(() => {
                 this.getAlarmList();
@@ -277,7 +310,22 @@ export default {
      * @param item
      */
     modify(item) {
+      this.weekList.forEach((item) => (item.selected = false));
       this.alarmData = JSON.parse(JSON.stringify(item));
+
+      this.$set(this.alarmData, 'time', [this.alarmData.hour, this.alarmData.minute]);
+
+      if (!this.alarmData.is_once) {
+        for (const weekDay of this.alarmData.week_days) {
+          let value = Number(weekDay);
+          let item1 = this.weekList.find((item) => item.value === value);
+
+          if (item1) {
+            item1.selected = true;
+          }
+        }
+      }
+
       this.$refs.appointmentDialog.open();
     },
 
@@ -315,73 +363,76 @@ export default {
     },
 
     /**
-     * TODO 保存
+     * 保存
      */
     submit() {
       let api = 'api/app/clock/add-clock';
-      let params = {};
 
-      if (this.alarmData.is_family) {
-        if (this.alarmData.is_once) {
-          if (!this.alarmData.date) {
-            uni.showToast({
-              title: '请选择预约时间',
-              icon: 'none',
-            });
-
-            return;
-          }
-
-          params = {
-            is_family: this.alarmData.is_family,
-            is_once: this.alarmData.is_once,
-            date: this.alarmData.date,
-            hour: this.alarmData.time[0],
-            minute: this.alarmData.time[1],
-            type: this.videoList[this.alarmData.type].value,
-          };
-        } else {
-          // TODO week_days 参数
-          let week_days = this.weekList.filter((x) => x.selected).map((x) => x.value);
-
-          if (!week_days.length) {
-            uni.showToast({
-              title: '请选择预约周期',
-              icon: 'none',
-            });
-
-            return;
-          }
-
-          params = {
-            is_family: this.alarmData.is_family,
-            is_once: this.alarmData.is_once,
-            week_days: week_days,
-            hour: this.alarmData.time[0],
-            minute: this.alarmData.time[1],
-            type: this.videoList[this.alarmData.type].value,
-          };
-        }
-      } else {
-        if (this.alarmData.is_once) {
-        } else {
-        }
+      if (this.alarmData.id) {
+        api = 'api/app/clock/edit-clock';
       }
 
-      console.log('params', params);
-      console.log('api', api);
+      let params = {};
 
-      // $http.post(api, params).then(() => {
-      //   this.getAlarmList();
-      //   uni.hideLoading();
-      //
-      //   uni.showToast({
-      //     title: '操作成功',
-      //     icon: 'none',
-      //   });
-      //
-      //   this.$refs.appointmentDialog.close();
-      // });
+      if (this.alarmData.is_once) {
+        if (!this.alarmData.date) {
+          uni.showToast({
+            title: '请选择预约时间',
+            icon: 'none',
+          });
+
+          return;
+        }
+
+        params = {
+          id: this.alarmData.id,
+          is_family: this.alarmData.is_family,
+          is_once: this.alarmData.is_once,
+          week_days: '',
+          date: this.alarmData.date,
+          hour: this.alarmData.time[0],
+          minute: this.alarmData.time[1],
+          type: this.videoList[this.alarmData.type].value,
+        };
+      } else {
+        let week_days = this.weekList.filter((x) => x.selected).map((x) => x.value.toString());
+
+        if (!week_days.length) {
+          uni.showToast({
+            title: '请选择预约周期',
+            icon: 'none',
+          });
+
+          return;
+        }
+
+        params = {
+          id: this.alarmData.id,
+          is_family: this.alarmData.is_family,
+          is_once: this.alarmData.is_once,
+          week_days: week_days.join(''),
+          hour: this.alarmData.time[0],
+          minute: this.alarmData.time[1],
+          type: this.videoList[this.alarmData.type].value,
+        };
+      }
+
+      uni.showLoading({
+        title: '加载中...',
+        mask: true,
+      });
+
+      $http.post(api, params).then(() => {
+        this.getAlarmList();
+        uni.hideLoading();
+
+        uni.showToast({
+          title: '操作成功',
+          icon: 'none',
+        });
+
+        this.$refs.appointmentDialog.close();
+      });
     },
   },
 };
